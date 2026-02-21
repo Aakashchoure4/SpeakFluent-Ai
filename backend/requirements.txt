@@ -3,6 +3,7 @@ fastapi==0.109.2
 uvicorn[standard]==0.27.1
 python-multipart==0.0.9
 python-dotenv==1.0.1
+email-validator>=2.0.0
 
 # WebSockets
 websockets==12.0
@@ -10,13 +11,13 @@ websockets==12.0
 # Database
 sqlalchemy[asyncio]==2.0.27
 asyncpg==0.29.0
-psycopg2-binary==2.9.9
+psycopg2-binary>=2.9.9
 alembic==1.13.1
 
 # Authentication
 passlib[bcrypt]==1.7.4
 python-jose[cryptography]==3.3.0
-bcrypt==4.1.2
+bcrypt>=4.0.0
 
 # AI / ML
 openai-whisper==20231117
@@ -27,7 +28,7 @@ numpy<2
 deep-translator==1.11.4
 
 # Text-to-Speech
-edge-tts==6.1.9
+edge-tts>=6.1.9
 
 # Language Detection
 langdetect==1.0.9
