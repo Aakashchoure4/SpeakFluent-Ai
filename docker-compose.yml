@@ -1,0 +1,89 @@
+# ============================================
+# Docker Compose — Live AI Meeting Interpreter
+# ============================================
+# Usage:
+#   docker-compose up --build -d
+#   docker-compose logs -f
+#   docker-compose down
+# ============================================
+
+version: "3.9"
+
+services:
+  # ---- PostgreSQL ----
+  db:
+    image: postgres:15-alpine
+    container_name: speakfluent-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-speakfluent}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-speakfluent_pass}
+      POSTGRES_DB: ${POSTGRES_DB:-speakfluent_db}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U speakfluent -d speakfluent_db" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ---- Backend (FastAPI) ----
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: speakfluent-backend
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-speakfluent}:${POSTGRES_PASSWORD:-speakfluent_pass}@db:5432/${POSTGRES_DB:-speakfluent_db}
+      DATABASE_URL_SYNC: postgresql://${POSTGRES_USER:-speakfluent}:${POSTGRES_PASSWORD:-speakfluent_pass}@db:5432/${POSTGRES_DB:-speakfluent_db}
+      SECRET_KEY: ${SECRET_KEY:-change-me-in-production}
+      ALGORITHM: ${ALGORITHM:-HS256}
+      ACCESS_TOKEN_EXPIRE_MINUTES: ${ACCESS_TOKEN_EXPIRE_MINUTES:-1440}
+      WHISPER_MODEL: ${WHISPER_MODEL:-base}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost,http://localhost:5173,http://localhost:3000}
+      STATIC_DIR: /app/static
+    volumes:
+      - backend_static:/app/static
+    expose:
+      - "8000"
+
+  # ---- Frontend (React / Vite) ----
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: speakfluent-frontend
+    restart: unless-stopped
+    expose:
+      - "80"
+
+  # ---- Nginx Reverse Proxy ----
+  nginx:
+    image: nginx:alpine
+    container_name: speakfluent-nginx
+    restart: unless-stopped
+    depends_on:
+      - backend
+      - frontend
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - backend_static:/app/static:ro
+    healthcheck:
+      test: [ "CMD", "wget", "-qO-", "http://localhost/health" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+volumes:
+  pgdata:
+    driver: local
+  backend_static:
+    driver: local

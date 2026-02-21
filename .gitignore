@@ -1,0 +1,39 @@
+# Environment
+.env
+*.env.local
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+venv/
+.venv/
+*.egg-info/
+dist/
+build/
+
+# Node
+node_modules/
+frontend/node_modules/
+frontend/dist/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docker
+*.log
+
+# Generated audio files
+backend/static/audio/*
+!backend/static/audio/.gitkeep
+
+# Whisper models cache
+backend/.cache/
