@@ -1,8 +1,16 @@
 /**
  * API service — centralised HTTP calls to the backend.
+ * 
+ * For mobile APK: set VITE_API_URL in .env to your server URL
+ * e.g. VITE_API_URL=https://yourserver.com
  */
 
-const API_BASE = '/api';
+// Server base URL — configurable for mobile vs web
+const SERVER_URL = import.meta.env.VITE_API_URL || '';
+const API_BASE = `${SERVER_URL}/api`;
+
+// Export for WebSocket connection
+export const getServerUrl = () => SERVER_URL || window.location.origin;
 
 /**
  * Get the stored JWT token.
@@ -32,6 +40,7 @@ async function apiFetch(endpoint, options = {}) {
     const token = getToken();
     const headers = {
         'Content-Type': 'application/json',
+        'ngrok-skip-browser-warning': 'true', // Bypass ngrok free tier warning page
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
         ...options.headers,
     };
